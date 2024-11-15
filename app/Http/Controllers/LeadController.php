@@ -15,11 +15,11 @@ class LeadController extends Controller
         if ($request->has('search')) {
             $search = $request->input('search');
             $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('email', 'like', "%{$search}%");
         }
 
-        // Paginate results
-        $leads = $query->paginate(20);
+        $limit = $request->input('limit', 20);
+        $leads = $query->paginate($limit);
 
         return response()->json($leads);
     }
