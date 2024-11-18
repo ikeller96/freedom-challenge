@@ -1,6 +1,6 @@
 import React from 'react';
 import LeadsList from './LeadsList';
-import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from './catalyst-ui-kit/typescript/navbar';
+import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from './catalyst/navbar';
 
 const MainPage: React.FC = () => {
     return (
