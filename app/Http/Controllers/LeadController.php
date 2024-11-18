@@ -10,7 +10,8 @@ class LeadController extends Controller
     // List all leads with pagination and search functionality
     public function index(Request $request)
     {
-        $query = Lead::query();
+        // Eager load the status relationship
+        $query = Lead::with('status');
 
         if ($request->has('search')) {
             $search = $request->input('search');
@@ -49,7 +50,8 @@ class LeadController extends Controller
     // Show a specific lead
     public function show($id)
     {
-        $lead = Lead::findOrFail($id);
+        // Eager load the status for a specific lead
+        $lead = Lead::with('status')->findOrFail($id);
         return response()->json($lead);
     }
 

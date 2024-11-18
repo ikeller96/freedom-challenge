@@ -8,6 +8,10 @@ export interface Lead {
     email: string;
     phone: string;
     lead_status_id: number;
+    status: {
+        id: number;
+        name: string;
+    };
     created_at?: string;
     updated_at?: string;
 }

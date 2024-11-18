@@ -134,7 +134,8 @@ const LeadsList: React.FC = () => {
                 {formatPhoneNumber(lead.phone)}
               </TableCell>
               <TableCell className="border-b border-gray-700">
-                {lead.lead_status_id}
+                {lead.status?.name || "N/A"}{" "}
+                {/* Fallback to 'N/A' if status is null */}
               </TableCell>
             </TableRow>
           ))}
