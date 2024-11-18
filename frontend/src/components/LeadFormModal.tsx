@@ -21,6 +21,7 @@ interface LeadFormModalProps {
     statuses: { id: number; name: string }[];
     onClose: () => void;
     onSubmit: (data: {
+        id?: number;
         name: string;
         email: string;
         phone: string;
@@ -34,7 +35,13 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({
     onClose,
     onSubmit,
 }) => {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        id?: number;
+        name: string;
+        email: string;
+        phone: string;
+        lead_status_id: number;
+    }>({
         name: "",
         email: "",
         phone: "",
@@ -44,6 +51,7 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({
     useEffect(() => {
         if (lead) {
             setFormData({
+                id: lead.id, // Include id when editing
                 name: lead.name,
                 email: lead.email,
                 phone: lead.phone,
@@ -56,17 +64,20 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({
+            ...prev,
+            [name]: name === "lead_status_id" ? parseInt(value, 10) : value,
+        }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+        onSubmit(formData); // Pass formData directly
     };
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded-md shadow-lg w-full max-w-md">
+            <div className="bg-gray-950 p-6 rounded-md shadow-lg w-full max-w-md">
                 <form onSubmit={handleSubmit}>
                     <Fieldset>
                         <Legend>{lead ? "Edit Lead" : "Add New Lead"}</Legend>

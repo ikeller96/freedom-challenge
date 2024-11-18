@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Lead;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class LeadController extends Controller
 {
@@ -58,17 +59,21 @@ class LeadController extends Controller
     // Update an existing lead
     public function update(Request $request, $id)
     {
+        // Find the lead by ID
         $lead = Lead::findOrFail($id);
 
+        // Validate the incoming request
         $validatedData = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:leads,email,' . $lead->id,
+            'email' => 'sometimes|email', // No unique validation
             'phone' => 'sometimes|string|max:20',
             'lead_status_id' => 'sometimes|integer|exists:lead_statuses,id',
         ]);
 
+        // Update the lead
         $lead->update($validatedData);
 
+        // Return the updated lead
         return response()->json($lead);
     }
 
