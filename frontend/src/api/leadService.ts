@@ -35,7 +35,7 @@ export const getLead = (id: number) => {
 };
 
 export const createLead = (
-    leadData: Omit<Lead, "id" | "created_at" | "updated_at">
+    leadData: Omit<Lead, "id" | "created_at" | "updated_at" | "status">
 ) => {
     return axios.post(API_URL, leadData);
 };

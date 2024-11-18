@@ -1,11 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\LeadStatusController;
 
 Route::apiResource('leads', LeadController::class);
-
-//TODO IAN: Remove this route
-Route::get('test', function () {
-	return 'API route is working';
-});
+Route::get('lead-statuses', [LeadStatusController::class, 'index']);
