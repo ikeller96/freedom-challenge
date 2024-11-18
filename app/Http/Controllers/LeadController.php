@@ -19,9 +19,16 @@ class LeadController extends Controller
         }
 
         $limit = $request->input('limit', 20);
+
         $leads = $query->paginate($limit);
 
-        return response()->json($leads);
+        return response()->json([
+            'data' => $leads->items(),
+            'currentPage' => $leads->currentPage(),
+            'totalPages' => $leads->lastPage(),
+            'totalItems' => $leads->total(),
+            'perPage' => $leads->perPage(),
+        ]);
     }
 
     // Store a new lead
@@ -34,10 +41,9 @@ class LeadController extends Controller
             'lead_status_id' => 'required|integer|exists:lead_statuses,id',
         ]);
 
-        // Create the lead
         $lead = Lead::create($validatedData);
 
-        return response()->json($lead, 201); // 201 Created
+        return response()->json($lead, 201);
     }
 
     // Show a specific lead
