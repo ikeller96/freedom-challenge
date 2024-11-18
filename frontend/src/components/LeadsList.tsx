@@ -28,9 +28,8 @@ const LeadsList: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-    const [statuses, setStatuses] = useState<{ id: number; name: string }[]>(
-        []
-    );
+    const [statuses, setStatuses] = useState<{ id: number; name: string }[]>([]);
+    const [notification, setNotification] = useState<string | null>(null);
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -51,27 +50,26 @@ const LeadsList: React.FC = () => {
     };
 
     const fetchStatuses = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/api/lead-statuses");
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        const data = await response.json();
-        setStatuses(data || []);
-      } catch (error) {
-        console.error("Error fetching lead statuses:", error);
-      }
+        try {
+            const response = await fetch("http://127.0.0.1:8000/api/lead-statuses");
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = await response.json();
+            setStatuses(data || []);
+        } catch (error) {
+            console.error("Error fetching lead statuses:", error);
+        }
     };
-    
+
     useEffect(() => {
-      fetchStatuses();
+        fetchStatuses();
     }, []);
 
     useEffect(() => {
         fetchLeads();
     }, [search, page]);
 
-    // Handle opening the modal for creating or editing
     const openModal = (lead?: Lead) => {
-        setSelectedLead(lead || null); // Restore null handling
+        setSelectedLead(lead || null);
         setIsModalOpen(true);
     };
 
@@ -80,7 +78,6 @@ const LeadsList: React.FC = () => {
         setSelectedLead(null);
     };
 
-    // Handle form submission
     const handleFormSubmit = async (data: {
         name: string;
         email: string;
@@ -89,14 +86,19 @@ const LeadsList: React.FC = () => {
     }) => {
         try {
             if (selectedLead) {
-                await updateLead(selectedLead.id, data); // Update existing lead
+                await updateLead(selectedLead.id, data);
+                setNotification("Lead updated successfully!");
             } else {
-                await createLead(data); // Create new lead
+                await createLead(data);
+                setNotification("Lead created successfully!");
             }
             fetchLeads();
             closeModal();
         } catch (error) {
             console.error("Error saving lead:", error);
+        } finally {
+            // Automatically hide notification after a few seconds
+            setTimeout(() => setNotification(null), 3000);
         }
     };
 
@@ -161,6 +163,11 @@ const LeadsList: React.FC = () => {
                 />
                 <Button onClick={() => openModal()}>Add New Lead</Button>
             </div>
+            {notification && (
+                <div className="bg-green-500 text-white p-2 mb-4 rounded">
+                    {notification}
+                </div>
+            )}
             <Table striped className="w-full text-left text-sm">
                 <TableHead>
                     <TableRow>
