@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getLeads, Lead, createLead, updateLead } from "../api/leadService";
+import {
+    getLeads,
+    Lead,
+    createLead,
+    updateLead,
+    deleteLead,
+} from "../api/leadService";
 import {
     Table,
     TableHead,
@@ -21,6 +27,12 @@ import { Heading } from "./catalyst/heading";
 import { formatPhoneNumber } from "../utils/helperFunctions";
 import { Button } from "./catalyst/button";
 import LeadFormModal from "./LeadFormModal";
+import {
+    Dropdown,
+    DropdownButton,
+    DropdownItem,
+    DropdownMenu,
+} from "./catalyst/dropdown";
 
 const LeadsList: React.FC = () => {
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -28,7 +40,9 @@ const LeadsList: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-    const [statuses, setStatuses] = useState<{ id: number; name: string }[]>([]);
+    const [statuses, setStatuses] = useState<{ id: number; name: string }[]>(
+        []
+    );
     const [notification, setNotification] = useState<string | null>(null);
 
     const location = useLocation();
@@ -51,8 +65,11 @@ const LeadsList: React.FC = () => {
 
     const fetchStatuses = async () => {
         try {
-            const response = await fetch("http://127.0.0.1:8000/api/lead-statuses");
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const response = await fetch(
+                "http://127.0.0.1:8000/api/lead-statuses"
+            );
+            if (!response.ok)
+                throw new Error(`HTTP error! Status: ${response.status}`);
             const data = await response.json();
             setStatuses(data || []);
         } catch (error) {
@@ -97,8 +114,22 @@ const LeadsList: React.FC = () => {
         } catch (error) {
             console.error("Error saving lead:", error);
         } finally {
-            // Automatically hide notification after a few seconds
             setTimeout(() => setNotification(null), 3000);
+        }
+    };
+
+    const handleDeleteLead = async (leadId: number) => {
+        // eslint-disable-next-line no-restricted-globals
+        if (confirm("Are you sure you want to delete this lead?")) {
+            try {
+                await deleteLead(leadId);
+                setNotification("Lead deleted successfully!");
+                fetchLeads();
+            } catch (error) {
+                console.error("Error deleting lead:", error);
+            } finally {
+                setTimeout(() => setNotification(null), 3000);
+            }
         }
     };
 
@@ -161,7 +192,7 @@ const LeadsList: React.FC = () => {
                     onChange={(e) => setSearch(e.target.value)}
                     className="my-4 p-2 border border-gray-600 rounded bg-gray-700 text-white placeholder-gray-400 min-w-80"
                 />
-                <Button onClick={() => openModal()}>Add New Lead</Button>
+                <Button color="blue" onClick={() => openModal()}>Add New Lead</Button>
             </div>
             {notification && (
                 <div className="bg-green-500 text-white p-2 mb-4 rounded">
@@ -204,9 +235,25 @@ const LeadsList: React.FC = () => {
                                 {lead.status?.name || "N/A"}
                             </TableCell>
                             <TableCell className="border-b border-gray-700">
-                                <Button onClick={() => openModal(lead)}>
-                                    Edit
-                                </Button>
+                                <Dropdown>
+                                    <DropdownButton color="zinc">
+                                        Options
+                                    </DropdownButton>
+                                    <DropdownMenu>
+                                        <DropdownItem
+                                            onClick={() => openModal(lead)}
+                                        >
+                                            Edit
+                                        </DropdownItem>
+                                        <DropdownItem
+                                            onClick={() =>
+                                                handleDeleteLead(lead.id)
+                                            }
+                                        >
+                                            Delete
+                                        </DropdownItem>
+                                    </DropdownMenu>
+                                </Dropdown>
                             </TableCell>
                         </TableRow>
                     ))}
