@@ -16,18 +16,8 @@ export interface Lead {
     updated_at?: string;
 }
 
-export const getLeads = async (
-    search: string,
-    page: number = 1,
-    limit: number = 10
-) => {
-    return await axios.get(API_URL, {
-        params: {
-            search,
-            page,
-            limit,
-        },
-    });
+export const getLeads = async (params: Record<string, string | number>) => {
+    return await axios.get(API_URL, { params });
 };
 
 export const getLead = (id: number) => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
     getLeads,
     Lead,
@@ -26,6 +26,7 @@ import {
 import { Heading } from "./catalyst/heading";
 import { formatPhoneNumber } from "../utils/helperFunctions";
 import { Button } from "./catalyst/button";
+import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import LeadFormModal from "./LeadFormModal";
 import {
     Dropdown,
@@ -44,16 +45,27 @@ const LeadsList: React.FC = () => {
         []
     );
     const [notification, setNotification] = useState<string | null>(null);
+    const [sortBy, setSortBy] = useState<string | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+    const [selectedStatus, setSelectedStatus] = useState<number | null>(null);
 
     const location = useLocation();
-    const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const defaultPage = parseInt(queryParams.get("page") || "1", 10);
     const [page, setPage] = useState(defaultPage);
 
     const fetchLeads = async () => {
         try {
-            const response = await getLeads(search, page, 20);
+            const params: Record<string, string | number> = {
+                search,
+                page,
+                limit: 20,
+                ...(sortBy && { sortBy }),
+                ...(sortBy && { sortDirection }),
+                ...(selectedStatus && { lead_status_id: selectedStatus }),
+            };
+
+            const response = await getLeads(params);
             if (response.data) {
                 setLeads(response.data.data || []);
                 setTotalPages(response.data.totalPages);
@@ -83,7 +95,7 @@ const LeadsList: React.FC = () => {
 
     useEffect(() => {
         fetchLeads();
-    }, [search, page]);
+    }, [search, page, sortBy, sortDirection, selectedStatus]);
 
     const openModal = (lead?: Lead) => {
         setSelectedLead(lead || null);
@@ -117,6 +129,21 @@ const LeadsList: React.FC = () => {
             setTimeout(() => setNotification(null), 3000);
         }
     };
+
+    const handleSortChange = (field: string) => {
+        if (sortBy === field) {
+            // Toggle sort direction
+            setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+        } else {
+            setSortBy(field);
+            setSortDirection("asc");
+        }
+    };
+
+    const handleStatusFilter = (statusId: number | null) => {
+      setSelectedStatus((prev) => (prev === statusId ? null : statusId));
+      setPage(1);
+  };
 
     const handleDeleteLead = async (leadId: number) => {
         // eslint-disable-next-line no-restricted-globals
@@ -192,7 +219,49 @@ const LeadsList: React.FC = () => {
                     onChange={(e) => setSearch(e.target.value)}
                     className="my-4 p-2 border border-gray-600 rounded bg-gray-700 text-white placeholder-gray-400 min-w-80"
                 />
-                <Button color="blue" onClick={() => openModal()}>Add New Lead</Button>
+                {/* Sorting Dropdown */}
+                <Dropdown>
+                    <DropdownButton outline color="cyan">
+                        Sort by <ChevronDownIcon />
+                    </DropdownButton>
+                    <DropdownMenu>
+                        <DropdownItem onClick={() => handleSortChange("name")}>
+                            Name{" "}
+                            {sortBy === "name" && `(Sorted: ${sortDirection})`}
+                        </DropdownItem>
+                        <DropdownItem
+                            onClick={() => handleSortChange("lead_status_id")}
+                        >
+                            Deal Status{" "}
+                            {sortBy === "lead_status_id" &&
+                                `(Sorted: ${sortDirection})`}
+                        </DropdownItem>
+                    </DropdownMenu>
+                </Dropdown>
+
+                {/* Status Filtering Dropdown -- Still need to fix */}
+                {/* <Dropdown>
+                    <DropdownButton outline color="cyan">
+                        Filter by Status <ChevronDownIcon />
+                    </DropdownButton>
+                    <DropdownMenu>
+                        <DropdownItem onClick={() => handleStatusFilter(null)}>
+                            All
+                        </DropdownItem>
+                        {statuses.map((status) => (
+                            <DropdownItem
+                                key={status.id}
+                                onClick={() => handleStatusFilter(status.id)}
+                            >
+                                {status.name}
+                                {selectedStatus === status.id && " (Selected)"}
+                            </DropdownItem>
+                        ))}
+                    </DropdownMenu>
+                </Dropdown> */}
+                <Button color="blue" onClick={() => openModal()}>
+                    Add New Lead
+                </Button>
             </div>
             {notification && (
                 <div className="bg-green-500 text-white p-2 mb-4 rounded">

@@ -10,33 +10,44 @@ class LeadController extends Controller
 {
     // List all leads with pagination and search functionality
     public function index(Request $request)
-{
-    $query = Lead::with(['status:id,name']); // Eager load only necessary columns
+    {
+        $query = Lead::with('status');
 
-    // Search functionality
-    if ($request->has('search')) {
-        $search = $request->input('search');
-        $query->where('name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
+        // Handle search (optional)
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%");
+        }
+
+        // Handle filtering by lead_status_id
+        if ($request->has('lead_status_id')) {
+            $query->where('lead_status_id', $request->input('lead_status_id'));
+        }
+
+        // Handle sorting by name or lead_status_id
+        if ($request->has('sortBy') && $request->has('sortDirection')) {
+            $sortBy = $request->input('sortBy');
+            $sortDirection = $request->input('sortDirection') === 'desc' ? 'desc' : 'asc';
+
+            // Only allow sorting by specific fields for security reasons
+            if (in_array($sortBy, ['name', 'lead_status_id'])) {
+                $query->orderBy($sortBy, $sortDirection);
+            }
+        }
+
+        $limit = $request->input('limit', 20);
+
+        $leads = $query->paginate($limit);
+
+        return response()->json([
+            'data' => $leads->items(),
+            'currentPage' => $leads->currentPage(),
+            'totalPages' => $leads->lastPage(),
+            'totalItems' => $leads->total(),
+            'perPage' => $leads->perPage(),
+        ]);
     }
-
-    // Sorting (optional: defaults to sorting by ID)
-    $sortBy = $request->input('sortBy', 'id'); // Default to 'id'
-    $sortOrder = $request->input('sortOrder', 'asc'); // Default to ascending
-    $query->orderBy($sortBy, $sortOrder);
-
-    // Pagination with max limit
-    $limit = min($request->input('limit', 20), 100); // Default 20, max 100
-    $leads = $query->paginate($limit);
-
-    return response()->json([
-        'data' => $leads->items(),
-        'currentPage' => $leads->currentPage(),
-        'totalPages' => $leads->lastPage(),
-        'totalItems' => $leads->total(),
-        'perPage' => $leads->perPage(),
-    ]);
-}
 
     // Create a new lead
     public function store(Request $request)
