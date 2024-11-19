@@ -26,7 +26,7 @@ import {
 import { Heading } from "./catalyst/heading";
 import { formatPhoneNumber } from "../utils/helperFunctions";
 import { Button } from "./catalyst/button";
-import { ChevronDownIcon } from '@heroicons/react/20/solid';
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import LeadFormModal from "./LeadFormModal";
 import {
     Dropdown,
@@ -62,7 +62,9 @@ const LeadsList: React.FC = () => {
                 limit: 20,
                 ...(sortBy && { sortBy }),
                 ...(sortBy && { sortDirection }),
-                ...(selectedStatus && { lead_status_id: selectedStatus }),
+                ...(selectedStatus !== null && {
+                    lead_status_id: selectedStatus,
+                }),
             };
 
             const response = await getLeads(params);
@@ -141,9 +143,11 @@ const LeadsList: React.FC = () => {
     };
 
     const handleStatusFilter = (statusId: number | null) => {
-      setSelectedStatus((prev) => (prev === statusId ? null : statusId));
-      setPage(1);
-  };
+        setSelectedStatus((prev) => {
+            return statusId === prev ? null : statusId;
+        });
+        setPage(1); // Reset to first page
+    };
 
     const handleDeleteLead = async (leadId: number) => {
         // eslint-disable-next-line no-restricted-globals
@@ -240,7 +244,7 @@ const LeadsList: React.FC = () => {
                 </Dropdown>
 
                 {/* Status Filtering Dropdown -- Still need to fix */}
-                {/* <Dropdown>
+                <Dropdown>
                     <DropdownButton outline color="cyan">
                         Filter by Status <ChevronDownIcon />
                     </DropdownButton>
@@ -258,7 +262,7 @@ const LeadsList: React.FC = () => {
                             </DropdownItem>
                         ))}
                     </DropdownMenu>
-                </Dropdown> */}
+                </Dropdown>
                 <Button color="blue" onClick={() => openModal()}>
                     Add New Lead
                 </Button>

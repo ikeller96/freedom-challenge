@@ -13,31 +13,31 @@ class LeadController extends Controller
     {
         $query = Lead::with('status');
 
-        // Handle search (optional)
         if ($request->has('search')) {
             $search = $request->input('search');
-            $query->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
         }
 
         // Handle filtering by lead_status_id
         if ($request->has('lead_status_id')) {
-            $query->where('lead_status_id', $request->input('lead_status_id'));
+            $leadStatusId = $request->input('lead_status_id');
+            $query->where('lead_status_id', $leadStatusId);
         }
 
-        // Handle sorting by name or lead_status_id
+        // Handle sorting
         if ($request->has('sortBy') && $request->has('sortDirection')) {
             $sortBy = $request->input('sortBy');
             $sortDirection = $request->input('sortDirection') === 'desc' ? 'desc' : 'asc';
 
-            // Only allow sorting by specific fields for security reasons
             if (in_array($sortBy, ['name', 'lead_status_id'])) {
                 $query->orderBy($sortBy, $sortDirection);
             }
         }
 
         $limit = $request->input('limit', 20);
-
         $leads = $query->paginate($limit);
 
         return response()->json([
