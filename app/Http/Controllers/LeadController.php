@@ -10,30 +10,35 @@ class LeadController extends Controller
 {
     // List all leads with pagination and search functionality
     public function index(Request $request)
-    {
-        // Eager load the status relationship
-        $query = Lead::with('status');
+{
+    $query = Lead::with(['status:id,name']); // Eager load only necessary columns
 
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
-        }
-
-        $limit = $request->input('limit', 20);
-
-        $leads = $query->paginate($limit);
-
-        return response()->json([
-            'data' => $leads->items(),
-            'currentPage' => $leads->currentPage(),
-            'totalPages' => $leads->lastPage(),
-            'totalItems' => $leads->total(),
-            'perPage' => $leads->perPage(),
-        ]);
+    // Search functionality
+    if ($request->has('search')) {
+        $search = $request->input('search');
+        $query->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
     }
 
-    // Store a new lead
+    // Sorting (optional: defaults to sorting by ID)
+    $sortBy = $request->input('sortBy', 'id'); // Default to 'id'
+    $sortOrder = $request->input('sortOrder', 'asc'); // Default to ascending
+    $query->orderBy($sortBy, $sortOrder);
+
+    // Pagination with max limit
+    $limit = min($request->input('limit', 20), 100); // Default 20, max 100
+    $leads = $query->paginate($limit);
+
+    return response()->json([
+        'data' => $leads->items(),
+        'currentPage' => $leads->currentPage(),
+        'totalPages' => $leads->lastPage(),
+        'totalItems' => $leads->total(),
+        'perPage' => $leads->perPage(),
+    ]);
+}
+
+    // Create a new lead
     public function store(Request $request)
     {
         $validatedData = $request->validate([
