@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const API_URL = "http://127.0.0.1:8000/api/leads";
+const STATUS_API_URL = "http://127.0.0.1:8000/api/lead-statuses";
 
 export interface Lead {
     id: number;
@@ -36,4 +37,14 @@ export const updateLead = (id: number, leadData: Partial<Lead>) => {
 
 export const deleteLead = (id: number) => {
     return axios.delete(`${API_URL}/${id}`);
+};
+
+export const fetchStatuses = async () => {
+    try {
+        const response = await axios.get(STATUS_API_URL);
+        return response.data || [];
+    } catch (error) {
+        console.error("Error fetching lead statuses:", error);
+        throw error; // Optional: re-throw if the caller needs to handle it
+    }
 };

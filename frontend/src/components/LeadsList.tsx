@@ -6,6 +6,7 @@ import {
     createLead,
     updateLead,
     deleteLead,
+    fetchStatuses,
 } from "../api/leadService";
 import {
     Table,
@@ -34,6 +35,7 @@ import {
     DropdownItem,
     DropdownMenu,
 } from "./catalyst/dropdown";
+import LeadsTable from "./LeadsTable";
 
 const LeadsList: React.FC = () => {
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -77,22 +79,17 @@ const LeadsList: React.FC = () => {
         }
     };
 
-    const fetchStatuses = async () => {
+    const initializeStatuses = async () => {
         try {
-            const response = await fetch(
-                "http://127.0.0.1:8000/api/lead-statuses"
-            );
-            if (!response.ok)
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            const data = await response.json();
-            setStatuses(data || []);
+            const data = await fetchStatuses();
+            setStatuses(data);
         } catch (error) {
-            console.error("Error fetching lead statuses:", error);
+            console.error("Failed to initialize statuses:", error);
         }
     };
 
     useEffect(() => {
-        fetchStatuses();
+        initializeStatuses();
     }, []);
 
     useEffect(() => {
@@ -169,9 +166,17 @@ const LeadsList: React.FC = () => {
         const startPage = Math.max(page - 2, 1);
         const endPage = Math.min(page + 2, totalPages);
 
+        const handlePageClick = (pageNumber: number) => {
+            setPage(pageNumber);
+        };
+
         if (startPage > 1) {
             pages.push(
-                <PaginationPage key={1} href={`?page=1`} current={page === 1}>
+                <PaginationPage
+                    key={1}
+                    current={page === 1}
+                    onClick={() => handlePageClick(1)}
+                >
                     1
                 </PaginationPage>
             );
@@ -185,8 +190,8 @@ const LeadsList: React.FC = () => {
             pages.push(
                 <PaginationPage
                     key={i}
-                    href={`?page=${i}`}
                     current={page === i}
+                    onClick={() => handlePageClick(i)}
                 >
                     {i}
                 </PaginationPage>
@@ -201,8 +206,8 @@ const LeadsList: React.FC = () => {
             pages.push(
                 <PaginationPage
                     key={totalPages}
-                    href={`?page=${totalPages}`}
                     current={page === totalPages}
+                    onClick={() => handlePageClick(totalPages)}
                 >
                     {totalPages}
                 </PaginationPage>
@@ -272,74 +277,27 @@ const LeadsList: React.FC = () => {
                     {notification}
                 </div>
             )}
-            <Table striped className="w-full text-left text-sm">
-                <TableHead>
-                    <TableRow>
-                        <TableHeader className="border-b border-gray-600">
-                            Name
-                        </TableHeader>
-                        <TableHeader className="border-b border-gray-600">
-                            Email
-                        </TableHeader>
-                        <TableHeader className="border-b border-gray-600">
-                            Phone
-                        </TableHeader>
-                        <TableHeader className="border-b border-gray-600">
-                            Status
-                        </TableHeader>
-                        <TableHeader className="border-b border-gray-600">
-                            Actions
-                        </TableHeader>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {leads.map((lead) => (
-                        <TableRow key={lead.id} className="hover:bg-gray-700">
-                            <TableCell className="border-b border-gray-700">
-                                {lead.name}
-                            </TableCell>
-                            <TableCell className="border-b border-gray-700">
-                                {lead.email}
-                            </TableCell>
-                            <TableCell className="border-b border-gray-700">
-                                {formatPhoneNumber(lead.phone)}
-                            </TableCell>
-                            <TableCell className="border-b border-gray-700">
-                                {lead.status?.name || "N/A"}
-                            </TableCell>
-                            <TableCell className="border-b border-gray-700">
-                                <Dropdown>
-                                    <DropdownButton color="zinc">
-                                        Options
-                                    </DropdownButton>
-                                    <DropdownMenu>
-                                        <DropdownItem
-                                            onClick={() => openModal(lead)}
-                                        >
-                                            Edit
-                                        </DropdownItem>
-                                        <DropdownItem
-                                            onClick={() =>
-                                                handleDeleteLead(lead.id)
-                                            }
-                                        >
-                                            Delete
-                                        </DropdownItem>
-                                    </DropdownMenu>
-                                </Dropdown>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+            <LeadsTable
+                leads={leads}
+                openModal={openModal}
+                handleDeleteLead={handleDeleteLead}
+            />
             <Pagination className="mt-6">
                 <PaginationPrevious
-                    href={page > 1 ? `?page=${page - 1}` : null}
-                />
+                    onClick={() => {
+                        if (page > 1) setPage(page - 1);
+                    }}
+                >
+                    Previous
+                </PaginationPrevious>
                 <PaginationList>{renderPageNumbers()}</PaginationList>
                 <PaginationNext
-                    href={page < totalPages ? `?page=${page + 1}` : null}
-                />
+                    onClick={() => {
+                        if (page < totalPages) setPage(page + 1);
+                    }}
+                >
+                    Next
+                </PaginationNext>
             </Pagination>
             {isModalOpen && (
                 <LeadFormModal
