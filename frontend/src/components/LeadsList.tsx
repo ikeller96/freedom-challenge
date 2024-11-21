@@ -37,6 +37,7 @@ import {
 } from "./catalyst/dropdown";
 import LeadsTable from "./LeadsTable";
 import debounce from "lodash/debounce";
+import { Spinner } from "./Spinner";
 
 const LeadsList: React.FC = () => {
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -52,6 +53,7 @@ const LeadsList: React.FC = () => {
     const [sortBy, setSortBy] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
     const [selectedStatus, setSelectedStatus] = useState<number | null>(null);
+    const [loading, setLoading] = useState(false);
 
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
@@ -61,17 +63,25 @@ const LeadsList: React.FC = () => {
     const debouncedSetSearch = useCallback(
         debounce((value: string) => {
             setDebouncedSearch(value);
-        }, 75),
+        }, 100),
         []
     );
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearch(value);
-        debouncedSetSearch(value);
+
+        if (value.trim() === "") {
+            setPage(1);
+            setDebouncedSearch("");
+        } else {
+            debouncedSetSearch(value);
+        }
     };
+
     const fetchLeads = async () => {
         try {
+            setLoading(true);
             const params: Record<string, string | number> = {
                 search: debouncedSearch,
                 page,
@@ -90,6 +100,8 @@ const LeadsList: React.FC = () => {
             }
         } catch (error) {
             console.error("Error fetching leads:", error);
+        } finally {
+            setLoading(false); // Hide the spinner
         }
     };
 
@@ -107,8 +119,8 @@ const LeadsList: React.FC = () => {
     }, []);
 
     useEffect(() => {
-      fetchLeads();
-  }, [debouncedSearch, page, sortBy, sortDirection, selectedStatus]);
+        fetchLeads();
+    }, [debouncedSearch, page, sortBy, sortDirection, selectedStatus]);
 
     const openModal = (lead?: Lead) => {
         setSelectedLead(lead || null);
@@ -291,6 +303,16 @@ const LeadsList: React.FC = () => {
                     {notification}
                 </div>
             )}
+            {loading ? (
+                <Spinner />
+            ) : (
+                <LeadsTable
+                    leads={leads}
+                    openModal={openModal}
+                    handleDeleteLead={handleDeleteLead}
+                />
+            )}
+
             <LeadsTable
                 leads={leads}
                 openModal={openModal}
