@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
     getLeads,
@@ -36,10 +36,12 @@ import {
     DropdownMenu,
 } from "./catalyst/dropdown";
 import LeadsTable from "./LeadsTable";
+import debounce from "lodash/debounce";
 
 const LeadsList: React.FC = () => {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [totalPages, setTotalPages] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -56,10 +58,22 @@ const LeadsList: React.FC = () => {
     const defaultPage = parseInt(queryParams.get("page") || "1", 10);
     const [page, setPage] = useState(defaultPage);
 
+    const debouncedSetSearch = useCallback(
+        debounce((value: string) => {
+            setDebouncedSearch(value);
+        }, 75),
+        []
+    );
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearch(value);
+        debouncedSetSearch(value);
+    };
     const fetchLeads = async () => {
         try {
             const params: Record<string, string | number> = {
-                search,
+                search: debouncedSearch,
                 page,
                 limit: 20,
                 ...(sortBy && { sortBy }),
@@ -93,8 +107,8 @@ const LeadsList: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        fetchLeads();
-    }, [search, page, sortBy, sortDirection, selectedStatus]);
+      fetchLeads();
+  }, [debouncedSearch, page, sortBy, sortDirection, selectedStatus]);
 
     const openModal = (lead?: Lead) => {
         setSelectedLead(lead || null);
@@ -225,7 +239,7 @@ const LeadsList: React.FC = () => {
                     type="text"
                     placeholder="Search by name or email"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={handleSearchChange}
                     className="my-4 p-2 border border-gray-600 rounded bg-gray-700 text-white placeholder-gray-400 min-w-80"
                 />
                 {/* Sorting Dropdown */}
