@@ -63,7 +63,7 @@ const LeadsList: React.FC = () => {
     const debouncedSetSearch = useCallback(
         debounce((value: string) => {
             setDebouncedSearch(value);
-        }, 100),
+        }, 150),
         []
     );
 
@@ -312,12 +312,6 @@ const LeadsList: React.FC = () => {
                     handleDeleteLead={handleDeleteLead}
                 />
             )}
-
-            <LeadsTable
-                leads={leads}
-                openModal={openModal}
-                handleDeleteLead={handleDeleteLead}
-            />
             <Pagination className="mt-6">
                 <PaginationPrevious
                     onClick={() => {
